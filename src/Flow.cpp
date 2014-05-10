@@ -151,4 +151,21 @@ void pathVariant::traceGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix
 {
 	AlgorithmLee(x1,y1,x2,y2);
 }
+//////////////////////////////////////////////////////////////////////////////
+/// Class fieldComparsion
+//////////////////////////////////////////////////////////////////////////////
+void fieldComparsion::initialize(MapFileHeader G_GameRule)
+{
+	m_editable = _TRUE;
+	m_counter = NULL;
+	m_idArray = m_idArraySize(m_idArray,G_GameRule);
+}
+int *fieldComparsion::m_idArraySize(int *i_array,MapFileHeader G_GameRule)
+{
+	i_array = (int *)malloc(sizeof(i_array)*G_GameRule.g_StartPosCount);
+	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+	{
+		i_array[i] = EMPTY_CELL;
+	}
+}
 

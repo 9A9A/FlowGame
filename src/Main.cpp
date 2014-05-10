@@ -330,6 +330,18 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		variantArray[i].entry(G_GameRule,G_GameMatrix,i);
 		variantArray[i].Output();
 	}
+	fieldComparsion **compField = (fieldComparsion**)malloc(sizeof(fieldComparsion*)*G_GameRule.g_Height);
+	for(int i=0;i<G_GameRule.g_Height;i++)
+	{
+		compField[i] = (fieldComparsion*)malloc(sizeof(fieldComparsion)*G_GameRule.g_Width);
+	}
+	for(int i=0;i<G_GameRule.g_Height;i++)
+	{
+		for(int j=0;j<G_GameRule.g_Width;j++)
+		{
+			compField[i][j].initialize(G_GameRule);
+		}
+	}
 	//AutoSolve(G_GameRule,G_GameMatrix);
 	//UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine);
 }

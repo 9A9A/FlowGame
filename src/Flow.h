@@ -102,4 +102,14 @@ private:
 	void loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix);
 	void traceGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix);
 };
+class fieldComparsion
+{
+public:
+	bool m_editable;
+	int m_counter;
+	int *m_idArray;
+	void initialize(MapFileHeader G_GameRule);
+private:
+	int *m_idArraySize(int *i_array,MapFileHeader G_GameRule);
+};
 
