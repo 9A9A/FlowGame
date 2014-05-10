@@ -28,6 +28,14 @@ void pathVariant::Output()
 		}
 	}
 }
+void pathVariant::clearPath()
+{
+	for(int i=0;i<H*W;i++)
+	{
+		path[i].g_Pos_x = EMPTY_CELL;
+		path[i].g_Pos_y = EMPTY_CELL;
+	}
+}
 void pathVariant::entry(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId)
 {
 	pathRecognize(G_GameRule,G_GameMatrix,FlowId);
@@ -54,11 +62,7 @@ void pathVariant::loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix)
 		gridArray[i] = (int *)malloc(sizeof(int)*W);
 	}
 	path =(coordinate *)malloc(sizeof(coordinate)*H*W);
-	for(int i=0;i<H*W;i++)
-	{
-		path[i].g_Pos_x = EMPTY_CELL;
-		path[i].g_Pos_y = EMPTY_CELL;
-	}
+	clearPath();
 	for(int g = 0; g<H;g++)
 	{
 		for(int h = 0; h<W;h++)

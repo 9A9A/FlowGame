@@ -95,6 +95,7 @@ public:
 	coordinate *path;
 	void entry(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId);
 	void Output();
+	void clearPath();
 private:
 	bool AlgorithmLee(int ax, int ay, int bx, int by);
 	void pathRecognize(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,int id);
