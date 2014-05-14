@@ -92,6 +92,7 @@ public:
 	int **gridArray;
 	int m_offset;
 	int m_Distance;
+	int m_pathLength;
 	coordinate *path;
 	void entry(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId);
 	void Output();

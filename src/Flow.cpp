@@ -9,7 +9,7 @@ pathVariant::pathVariant()
 void pathVariant::Output()
 {
 	printf("\n=======================================\n");
-	printf("Line id : %d  Manhattan Distance: %d \n",globalId,m_Distance);
+	printf("Line id : %d  Manhattan Distance: %d     Path distance: %d\n",globalId,m_Distance,m_pathLength);
 	printf("\n=======================================\n");
 	for(int i=0;i<H*W;i++)
 	{
@@ -44,6 +44,7 @@ void pathVariant::entry(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,in
 	loadGrid(G_GameRule,G_GameMatrix);
 	traceGrid(G_GameRule,G_GameMatrix);
 	m_Distance = ManhattanDistance(x1,x2,y1,y2);
+	m_pathLength = ++len;
 }
 void pathVariant::pathRecognize(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,int id)
 {

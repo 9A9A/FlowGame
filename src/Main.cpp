@@ -343,13 +343,12 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 			compField[i][j].initialize(G_GameRule);
 		}
 	}
-	int m_inCounter=0;
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
 		//compField[G_GameMatrix[i].g_EndPos_y][G_GameMatrix[i].g_EndPos_x].m_editable = _FALSE;
 		//compField[G_GameMatrix[i].g_StartPos_y][G_GameMatrix[i].g_StartPos_x].m_editable = _FALSE;
 		int x,y;
-		for(int j=0;j<variantArray[0].H*variantArray[0].W;j++)
+		for(int j=0;j<variantArray[i].m_pathLength;j++)
 		{
 			if(variantArray[i].path[j].g_Pos_x != EMPTY_CELL)
 			{
