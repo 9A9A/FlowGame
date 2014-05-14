@@ -109,7 +109,6 @@ public:
 	int m_counter;
 	int *m_idArray;
 	void initialize(MapFileHeader G_GameRule);
-private:
-	int *m_idArraySize(int *i_array,MapFileHeader G_GameRule);
+	void Output();
 };
 

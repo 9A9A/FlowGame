@@ -161,7 +161,7 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 	bool breakout;
 	while(true)
 	{
-		system("cls");
+		//system("cls");
 		flag = 0;
 		DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,G_GameMatrix,g_FlowLine,lines_done);
 		lines_done = 0;
@@ -241,7 +241,7 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 									{
 										g_FlowLine[temp_lineid].done = true;
 										g_FlowLine[temp_lineid].g_PointListing[g_FlowLine[temp_lineid].current+1] = g_FlowLine[temp_lineid].g_idEndPos;
-										g_FlowLine[temp_lineid].g_PointListing[(G_GameRule.g_Height + G_GameRule.g_Width)*2-1] = -1;
+										g_FlowLine[temp_lineid].g_PointListing[(G_GameRule.g_Height + G_GameRule.g_Width)*2-1] = EMPTY_CELL;
 									}
 								}
 								g_FlowLine[temp_lineid].g_PointListing[g_FlowLine[temp_lineid].current] = cell_id;
@@ -330,6 +330,7 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		variantArray[i].entry(G_GameRule,G_GameMatrix,i);
 		variantArray[i].Output();
 	}
+	// NEW ADDED START
 	fieldComparsion **compField = (fieldComparsion**)malloc(sizeof(fieldComparsion*)*G_GameRule.g_Height);
 	for(int i=0;i<G_GameRule.g_Height;i++)
 	{
@@ -342,8 +343,39 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 			compField[i][j].initialize(G_GameRule);
 		}
 	}
+	int m_inCounter=0;
+	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+	{
+		//compField[G_GameMatrix[i].g_EndPos_y][G_GameMatrix[i].g_EndPos_x].m_editable = _FALSE;
+		//compField[G_GameMatrix[i].g_StartPos_y][G_GameMatrix[i].g_StartPos_x].m_editable = _FALSE;
+		int x,y;
+		for(int j=0;j<variantArray[0].H*variantArray[0].W;j++)
+		{
+			if(variantArray[i].path[j].g_Pos_x != EMPTY_CELL)
+			{
+				x = variantArray[i].path[j].g_Pos_x-1;
+				y = variantArray[i].path[j].g_Pos_y-1;
+				if(compField[y][x].m_editable == _TRUE)
+				{
+					compField[y][x].m_idArray[compField[y][x].m_counter] = i;
+					compField[y][x].m_counter++;	
+					//m_inCounter++;
+				}
+			}
+		}
+	}
+	printf("\n");
+	for(int i=0;i<G_GameRule.g_Height;i++)
+	{
+		for(int j=0;j<G_GameRule.g_Width;j++)
+		{
+			compField[i][j].Output();
+		}
+		printf("\n");
+	}
+	// END
 	//AutoSolve(G_GameRule,G_GameMatrix);
-	//UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine);
+	UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine);
 }
 short *NCells(cell **g_GameField,FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,short x, short y) // (Вычисляет окрестность фон неймана вокруг заданной точки с размерностью 1 )возвращает массив с id_pos соседей указанной точки (short) by default 
 {
@@ -491,7 +523,8 @@ int main()
 	if (!(ss >> a[1])) { printf("1\n"); system("pause"); }
 	if (!(ss >> a[2])) { printf("3\n"); system("pause"); }
 	*/
-	GameMenu();
+	ReadFileHeader();
+	//GameMenu();
 	system("pause");
 }
 void GameMenu()

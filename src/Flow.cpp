@@ -92,8 +92,8 @@ void pathVariant::loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix)
 }
 bool pathVariant::AlgorithmLee(int ax, int ay, int bx, int by)   // поиск пути из €чейки (ax, ay) в €чейку (bx, by)
 {
-	int dx[4] = {1, 0, -1, 0};   // смещени€, соответствующие сосед€м €чейки
-	int dy[4] = {0, 1, 0, -1};   // справа, снизу, слева и сверху
+	int dx[SIDE_MAX_COUNT] = {1, 0, -1, 0};   // смещени€, соответствующие сосед€м €чейки
+	int dy[SIDE_MAX_COUNT] = {0, 1, 0, -1};   // справа, снизу, слева и сверху
 	int d, x, y, k;
 	bool stop;
 	// распространение волны
@@ -108,7 +108,7 @@ bool pathVariant::AlgorithmLee(int ax, int ay, int bx, int by)   // поиск пути и
 			{
 				if ( gridArray[y][x] == d )                         // €чейка (x, y) помечена числом d
 				{
-					for ( k = 0; k < 4; ++k )                    // проходим по всем непомеченным сосед€м
+					for ( k = 0; k < SIDE_MAX_COUNT; ++k )                    // проходим по всем непомеченным сосед€м
 					{
 						if ( gridArray[y + dy[k]][x + dx[k]] == BLANK )
 						{
@@ -133,7 +133,7 @@ bool pathVariant::AlgorithmLee(int ax, int ay, int bx, int by)   // поиск пути и
 		path[d].g_Pos_x = x;
 		path[d].g_Pos_y = y;                   // записываем €чейку (x, y) в путь
 		d--;
-		for (k = 0; k < 4; ++k)
+		for (k = 0; k < SIDE_MAX_COUNT; ++k)
 		{
 			if (gridArray[y + dy[k]][x + dx[k]] == d)
 			{
@@ -157,15 +157,17 @@ void pathVariant::traceGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix
 void fieldComparsion::initialize(MapFileHeader G_GameRule)
 {
 	m_editable = _TRUE;
-	m_counter = NULL;
-	m_idArray = m_idArraySize(m_idArray,G_GameRule);
-}
-int *fieldComparsion::m_idArraySize(int *i_array,MapFileHeader G_GameRule)
-{
-	i_array = (int *)malloc(sizeof(i_array)*G_GameRule.g_StartPosCount);
+	m_counter = FREE_BLOCK;
+	m_idArray = (int *)malloc(sizeof(m_idArray)*G_GameRule.g_StartPosCount);
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
-		i_array[i] = EMPTY_CELL;
+		m_idArray[i] = EMPTY_CELL;
 	}
+
 }
+void fieldComparsion::Output()
+{
+	printf("%d\t",m_counter);
+}
+
 
