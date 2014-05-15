@@ -7,6 +7,7 @@
 #include <string>
 #include <math.h>
 #include <sstream>
+#include <vector>
 #include <Windows.h>
 #define FREE_BLOCK 0
 #define _TRUE 1
@@ -49,7 +50,9 @@ typedef struct
 {
 	short g_Pos_x;
 	short g_Pos_y;
+
 } coordinate;
+
 typedef struct
 {
 	short g_PosKeyValue;
@@ -77,10 +80,12 @@ DWORD *BuildListId(MapFileHeader G_GameRule,cell **g_GameField);
 cell **AllocateMemory(MapFileHeader);
 void AutoSolve(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix);
 bool AlgorithmLee(int ax, int ay, int bx, int by);
+void nullArray(int size_x,int size_y, int **input);
 class pathVariant
 {
 public:
-	pathVariant();
+	pathVariant(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId);
+	pathVariant(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId,int **m_BlockArray);
 	int x1;
 	int y1;
 	int x2;
@@ -93,13 +98,16 @@ public:
 	int m_offset;
 	int m_Distance;
 	int m_pathLength;
+	bool inCollision;
 	coordinate *path;
-	void entry(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId);
+	//void initialize(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId);
 	void Output();
 	void clearPath();
+	void reinitialize();
 private:
 	bool AlgorithmLee(int ax, int ay, int bx, int by);
 	void pathRecognize(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,int id);
+	void loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix, int **m_BlockArray);
 	void loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix);
 	void traceGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix);
 };

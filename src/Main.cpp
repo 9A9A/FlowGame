@@ -130,6 +130,7 @@ void DisplayGameMatrix(MapFileHeader G_GameRule,cell **g_GameField, DWORD *g_IdL
 	}
 	SetConsoleTextAttribute(text_color, 15);
 	printf("\nUsed Cells : %d\tIn Percentage : %d%%\t",UsedCells(g_GameField,G_GameRule,G_GameMatrix),UsedCellsInPercentage(g_GameField,G_GameRule,G_GameMatrix));
+#ifdef _DEBUG
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
 		printf("\nListing %d :",i);
@@ -139,6 +140,7 @@ void DisplayGameMatrix(MapFileHeader G_GameRule,cell **g_GameField, DWORD *g_IdL
 		}
 		printf("END: %d",g_FlowLine[i].done);
 	}
+#endif
 	printf("\n");
 	printf("Lines done: %d\n",lines_done);
 }
@@ -324,10 +326,12 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		}
 	}
 	system("cls");
-	pathVariant *variantArray = (pathVariant *)malloc(sizeof(pathVariant)*G_GameRule.g_StartPosCount);
+	vector<pathVariant> variantArray;
+	//pathVariant *variantArray = (pathVariant *)malloc(sizeof(pathVariant)*G_GameRule.g_StartPosCount);
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
-		variantArray[i].entry(G_GameRule,G_GameMatrix,i);
+		variantArray.push_back(pathVariant(G_GameRule,G_GameMatrix,i));
+		//variantArray[i].initialize(G_GameRule,G_GameMatrix,i);
 		variantArray[i].Output();
 	}
 	// NEW ADDED START
@@ -364,14 +368,89 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		}
 	}
 	printf("\n");
+	int s_overloadedCells;
+	int s_freeCells=0;
+	struct coord
+	{
+		short g_Pos_x;
+		short g_Pos_y;
+		coord(short x, short y) : g_Pos_x(x), g_Pos_y(y) {}
+	};
+	vector<coord> overloadedCoordinates;
 	for(int i=0;i<G_GameRule.g_Height;i++)
 	{
 		for(int j=0;j<G_GameRule.g_Width;j++)
 		{
 			compField[i][j].Output();
+			if(compField[i][j].m_counter > 1)
+			{
+				overloadedCoordinates.push_back(coord(j,i));
+			}
+			if(compField[i][j].m_counter == 0)
+			{
+				s_freeCells++;
+			}
+		}
+		s_overloadedCells = overloadedCoordinates.size();
+		printf("\n");
+	}
+	
+	for(int i=0;i<s_overloadedCells;i++) // все линии которые пересеклись - помечаем inCollision -> TRUE
+	{
+		int x,y;
+		x = overloadedCoordinates[i].g_Pos_x;
+		y = overloadedCoordinates[i].g_Pos_y;
+		for(int j=0;j<compField[y][x].m_counter;j++)
+		{
+			if(variantArray[compField[y][x].m_idArray[j]].inCollision == _FALSE)
+			{
+				variantArray[compField[y][x].m_idArray[j]].inCollision = _TRUE;
+			}
+		}
+	}
+#ifdef _DEBUG
+	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+	{
+		printf("Line : %d inCollision : %d\n",i,variantArray[i].inCollision);
+	}
+
+	printf("\noverloaded cells: %d   free cells : %d\n",s_overloadedCells,s_freeCells);
+	for(int i=0;i<s_overloadedCells;i++)
+	{
+		printf("\nx: %d y: %d\n",overloadedCoordinates[i].g_Pos_x,overloadedCoordinates[i].g_Pos_y);
+	}
+#endif
+	int **BlockArray = (int **)malloc(sizeof(int *)*G_GameRule.g_Height);
+	for(int i=0;i<G_GameRule.g_Height;i++)
+	{
+		BlockArray[i] = (int *)malloc(sizeof(int) *G_GameRule.g_Width);
+	}
+	nullArray(G_GameRule.g_Width,G_GameRule.g_Height,BlockArray);
+	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+	{
+		if(variantArray[i].inCollision != _TRUE)
+		{
+			for(int h=0;h<variantArray[i].m_pathLength;h++)
+			{
+				int x,y;
+				x = variantArray[i].path[h].g_Pos_x-1;
+				y = variantArray[i].path[h].g_Pos_y-1;
+				BlockArray[y][x] = WALL;
+			}
+		}
+	}
+#ifdef _DEBUG
+	for(int i=0;i<G_GameRule.g_Height;i++)
+	{
+		for(int j=0;j<G_GameRule.g_Width;j++)
+		{
+			printf("%d\t",BlockArray[i][j]);
 		}
 		printf("\n");
 	}
+#endif
+	pathVariant check(G_GameRule,G_GameMatrix,0,BlockArray);
+	check.Output();
 	// END
 	//AutoSolve(G_GameRule,G_GameMatrix);
 	UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine);
@@ -402,6 +481,16 @@ short *NCells(cell **g_GameField,FlowFileArray *G_GameMatrix,MapFileHeader G_Gam
 		g_NCellsArray[i++]=g_GameField[y][x-1].g_idPos;
 	}
 	return g_NCellsArray;
+}
+void nullArray(int size_x,int size_y, int **input)
+{
+	for(int i=0;i<size_y;i++)
+	{
+		for(int j=0;j<size_x;j++)
+		{
+			input[i][j] = FREE_BLOCK;
+		}
+	}
 }
 coordinate *VonNeumannNeighborhood(int *m_EntryArray,int m_Size_x,int m_Size_y,int x, int y) // ¬ычисление окрестности фон неймана m_EntryArray - входной массив / m_Size_x/y - размеры массива   x/y - координаты точки 
 {

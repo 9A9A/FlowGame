@@ -2,8 +2,11 @@
 //////////////////////////////////////////////////////////////////////////////
 /// Class pathVariant
 //////////////////////////////////////////////////////////////////////////////
-pathVariant::pathVariant()
+void pathVariant::reinitialize()
 {
+
+
+
 
 }
 void pathVariant::Output()
@@ -36,12 +39,24 @@ void pathVariant::clearPath()
 		path[i].g_Pos_y = EMPTY_CELL;
 	}
 }
-void pathVariant::entry(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId)
+pathVariant::pathVariant(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId)
 {
+	inCollision = _FALSE;
 	pathRecognize(G_GameRule,G_GameMatrix,FlowId);
 	m_offset = M_OFFSET;
 	globalId = FlowId;
 	loadGrid(G_GameRule,G_GameMatrix);
+	traceGrid(G_GameRule,G_GameMatrix);
+	m_Distance = ManhattanDistance(x1,x2,y1,y2);
+	m_pathLength = ++len;
+}
+pathVariant::pathVariant(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,int FlowId,int **m_BlockArray)// TO DO : допилить с входным блокирующим массивом
+{
+	inCollision = _FALSE;
+	pathRecognize(G_GameRule,G_GameMatrix,FlowId);
+	m_offset = M_OFFSET;
+	globalId = FlowId;
+	loadGrid(G_GameRule,G_GameMatrix,m_BlockArray);
 	traceGrid(G_GameRule,G_GameMatrix);
 	m_Distance = ManhattanDistance(x1,x2,y1,y2);
 	m_pathLength = ++len;
@@ -75,6 +90,54 @@ void pathVariant::loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix)
 			else
 			{
 				gridArray[g][h] = BLANK;
+			}
+		}
+	}
+	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+	{
+		short g_TempStart_x,g_TempStart_y,g_TempEnd_x,g_TempEnd_y;
+		g_TempStart_x = G_GameMatrix[i].g_StartPos_x+1;
+		g_TempStart_y = G_GameMatrix[i].g_StartPos_y+1;
+		g_TempEnd_x = G_GameMatrix[i].g_EndPos_x+1;
+		g_TempEnd_y = G_GameMatrix[i].g_EndPos_y+1;
+		gridArray[g_TempStart_y][g_TempStart_x] = WALL;
+		gridArray[g_TempEnd_y][g_TempEnd_x] = WALL;
+	}
+	gridArray[y1][x1] = BLANK;
+	gridArray[y2][x2] = BLANK;
+}
+void pathVariant::loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,int **m_BlockArray)
+{
+	H = G_GameRule.g_Height + m_offset;
+	W = G_GameRule.g_Width + m_offset;
+	gridArray = (int **)malloc(sizeof(int *)*H);
+	for(int i=0;i<W;i++)
+	{
+		gridArray[i] = (int *)malloc(sizeof(int)*W);
+	}
+	path =(coordinate *)malloc(sizeof(coordinate)*H*W);
+	clearPath();
+	for(int g = 0; g<H;g++)
+	{
+		for(int h = 0; h<W;h++)
+		{
+			if((g == 0 || h == 0) || (g == H-1 || h == W-1))
+			{
+				gridArray[g][h] = WALL;
+			}
+			else
+			{
+				gridArray[g][h] = BLANK;
+			}
+		}
+	}
+	for(int g = 0; g < G_GameRule.g_Height; g++)
+	{
+		for(int l = 0; l < G_GameRule.g_Width; l++)
+		{
+			if(m_BlockArray[g][l] == WALL)
+			{
+				gridArray[g+1][l+1] == m_BlockArray[g][l];
 			}
 		}
 	}
