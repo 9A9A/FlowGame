@@ -8,14 +8,16 @@
 #include <math.h>
 #include <sstream>
 #include <vector>
+#include <map>
 #include <Windows.h>
+#include <algorithm>
+#include <conio.h>
 #define FREE_BLOCK 0
-#define _TRUE 1
-#define _FALSE 0
 #define MAX_GAMEFIELD_LENGTH 16
 #define MAX_GAMEFIELD_WIDTH 16
 #define SIDE_MAX_COUNT 4
 #define COMPLETE 100
+#define KEYWORD "solve"
 #define BUFFSIZE 256
 #define M_OFFSET 2
 #define WALL -1
@@ -69,7 +71,9 @@ void WriteFileHeader();
 void ReadFileHeader();
 int ManhattanDistance(int x1, int x2, int y1, int y2);
 void BuildGameMatrix(FlowFileArray *,MapFileHeader);
-void DisplayGameMatrix(MapFileHeader G_GameRule,cell **g_GameField, DWORD *g_IdList,FlowFileArray *G_GameMatrix,FlowLine *g_FlowLine,bool end);
+void DisplayGameMatrix(MapFileHeader G_GameRule,cell **g_GameField, DWORD *g_IdList,FlowFileArray *G_GameMatrix,FlowLine *g_FlowLine,short lines_done);
+void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell **g_GameField,DWORD *g_IdList,FlowLine *g_FlowLine);
+void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell **g_GameField,DWORD *g_IdList,FlowLine *g_FlowLine, int sendto_x, int sendto_y, int sendto_keyvalue);
 short ConvertCoordinateToId(short x, short y,MapFileHeader G_GameRule);
 short *NCells(cell **g_GameField,FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,short x, short y);
 unsigned int UsedCells(cell **,MapFileHeader,FlowFileArray *);
@@ -81,6 +85,7 @@ cell **AllocateMemory(MapFileHeader);
 void AutoSolve(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix);
 bool AlgorithmLee(int ax, int ay, int bx, int by);
 void nullArray(int size_x,int size_y, int **input);
+void UpdateBlockArray(coordinate *input, int **output, int i_size);
 class pathVariant
 {
 public:

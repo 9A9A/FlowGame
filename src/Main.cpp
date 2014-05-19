@@ -1,4 +1,7 @@
 #include "Flow.h"
+short iGlobalDone;
+
+
 
 void WriteFileHeader() // √енераци€ игрового пол€ (запись в файл)
 {
@@ -9,7 +12,7 @@ void WriteFileHeader() // √енераци€ игрового пол€ (запись в файл)
 	mpfHeader.f_offset = sizeof(MapFileHeader);
 	DWORD CurrentDirectoryBuffer;
 	DWORD Header_offset;
-	CurrentDirectoryBuffer = GetCurrentDirectory(256,buffer);
+	CurrentDirectoryBuffer = GetCurrentDirectory(BUFFSIZE,buffer);
 	HANDLE hFile;
 	CharToOem(buffer,buffer);
 	cout << "\nEnter size of game field in x : ";
@@ -87,7 +90,7 @@ cell **AllocateMemory(MapFileHeader G_GameRule) // выделение пам€ти под игровую 
 	{
 		for(int j=0;j<G_GameRule.g_Width;j++)
 		{
-			g_GameField[i][j].walkable = 1;
+			g_GameField[i][j].walkable = true;
 			g_GameField[i][j].g_PosKeyValue = FREE_BLOCK;
 		}
 	}
@@ -163,7 +166,9 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 	bool breakout;
 	while(true)
 	{
-		//system("cls");
+#ifndef _DEBUG
+		system("cls");
+#endif
 		flag = 0;
 		DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,G_GameMatrix,g_FlowLine,lines_done);
 		lines_done = 0;
@@ -200,13 +205,13 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 				g_FlowLine[temp_lineid].g_PointListing[((G_GameRule.g_Height + G_GameRule.g_Width)*2)-1] = g_FlowLine[temp_lineid].g_idEndPos;
 				buffer = ConvertIdToCoordinate(g_FlowLine[temp_lineid].g_idEndPos,G_GameRule);
 				g_GameField[buffer.g_Pos_y][buffer.g_Pos_x].g_PosKeyValue = g_FlowLine[temp_lineid].g_PosKeyValue;
-				if(g_FlowLine[temp_lineid].done == _TRUE)
+				if(g_FlowLine[temp_lineid].done == true)
 				{
-					g_FlowLine[temp_lineid].done = _FALSE;
+					g_FlowLine[temp_lineid].done = false;
 				}
 			}
 			temp_lineid = FlowLineId(keyvalue,G_GameRule,G_GameMatrix);
-			if((g_FlowLine[temp_lineid].g_PosKeyValue == keyvalue)&&(g_FlowLine[temp_lineid].done!=_TRUE))
+			if((g_FlowLine[temp_lineid].g_PosKeyValue == keyvalue)&&(g_FlowLine[temp_lineid].done!= true))
 			{
 				coordinate temp;
 				temp = ConvertIdToCoordinate(g_FlowLine[temp_lineid].g_PointListing[g_FlowLine[temp_lineid].current-1],G_GameRule);
@@ -215,10 +220,10 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 				{
 					if(g_FlowLine[temp_lineid].g_PointListing[h]==ConvertCoordinateToId(x,y,G_GameRule))
 					{
-						breakout = _TRUE;
+						breakout = true;
 					}
 				}
-				if(breakout == _FALSE)
+				if(breakout == false)
 				{
 					for(int i=0;i<SIDE_MAX_COUNT;i++)
 					{
@@ -226,9 +231,9 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 						{
 							if(flag == FREE_BLOCK)
 							{
-								keyvalue = _FALSE;
+								keyvalue = false;
 							}
-							if(g_GameField[y][x].walkable == _FALSE)
+							if(g_GameField[y][x].walkable == false)
 							{
 								keyvalue = temp_value;
 							}
@@ -255,14 +260,15 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 					}
 				}
 			}
-			breakout = _FALSE;
+			breakout = false;
 			for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 			{
-				if(g_FlowLine[i].done == _TRUE)
+				if(g_FlowLine[i].done == true)
 				{
 					lines_done++;
 				}
 			}
+			iGlobalDone = lines_done;
 			if((lines_done == G_GameRule.g_StartPosCount) && (UsedCellsInPercentage(g_GameField,G_GameRule,G_GameMatrix) == COMPLETE))
 			{
 				system("cls");
@@ -272,11 +278,131 @@ void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell *
 		}
 	}
 }
+void UpdateGameField(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,cell **g_GameField,DWORD *g_IdList,FlowLine *g_FlowLine, int sendto_x, int sendto_y, int sendto_keyvalue) // overloaded version of UpdateGameField
+{
+	static short x,y,keyvalue,flag,temp_id,temp_value,temp_lineid,cell_id,lines_done=0,temp_listing_id;
+	static short *n;
+	static bool breakout;
+#ifndef _DEBUG
+		system("cls");
+#endif
+		flag = 0;
+		//DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,G_GameMatrix,g_FlowLine,lines_done);
+		lines_done = 0;
+		//scanf("%d %d %d",&x,&y,&keyvalue);
+		x = sendto_x;
+		y = sendto_y;
+		keyvalue  = sendto_keyvalue;
+		if((0 <= y < G_GameRule.g_Height) && (0 <= x < G_GameRule.g_Width) && (g_GameField[y][x].walkable != 0))
+		{
+			for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+			{
+				if(keyvalue==G_GameMatrix[i].g_PosKeyValue)
+				{
+					flag = 1;
+				}
+			}
+			cell_id = ConvertCoordinateToId(x,y,G_GameRule);
+			temp_value = keyvalue;
+			if((g_GameField[y][x].g_PosKeyValue != keyvalue) && (g_GameField[y][x].g_PosKeyValue != FREE_BLOCK))
+			{
+				coordinate buffer;
+				temp_lineid = FlowLineId(g_GameField[y][x].g_PosKeyValue,G_GameRule,G_GameMatrix);
+				for(int i=0;i<(G_GameRule.g_Height + G_GameRule.g_Width)*2;i++)
+				{
+					if(g_FlowLine[temp_lineid].g_PointListing[i] == cell_id)
+					{
+						temp_listing_id = i;
+					}
+				}
+				g_FlowLine[temp_lineid].current = temp_listing_id;
+				for(int i=temp_listing_id;i<((G_GameRule.g_Height + G_GameRule.g_Width)*2)-1;i++)
+				{
+					buffer = ConvertIdToCoordinate(g_FlowLine[temp_lineid].g_PointListing[i],G_GameRule);
+					g_FlowLine[temp_lineid].g_PointListing[i] = -1;
+					g_GameField[buffer.g_Pos_y][buffer.g_Pos_x].g_PosKeyValue = 0;
+				}
+				g_FlowLine[temp_lineid].g_PointListing[((G_GameRule.g_Height + G_GameRule.g_Width)*2)-1] = g_FlowLine[temp_lineid].g_idEndPos;
+				buffer = ConvertIdToCoordinate(g_FlowLine[temp_lineid].g_idEndPos,G_GameRule);
+				g_GameField[buffer.g_Pos_y][buffer.g_Pos_x].g_PosKeyValue = g_FlowLine[temp_lineid].g_PosKeyValue;
+				if(g_FlowLine[temp_lineid].done == true)
+				{
+					g_FlowLine[temp_lineid].done = false;
+				}
+			}
+			temp_lineid = FlowLineId(keyvalue,G_GameRule,G_GameMatrix);
+			if((g_FlowLine[temp_lineid].g_PosKeyValue == keyvalue)&&(g_FlowLine[temp_lineid].done!= true))
+			{
+				coordinate temp;
+				temp = ConvertIdToCoordinate(g_FlowLine[temp_lineid].g_PointListing[g_FlowLine[temp_lineid].current-1],G_GameRule);
+				n = NCells(g_GameField,G_GameMatrix,G_GameRule,temp.g_Pos_x,temp.g_Pos_y);
+				for(int h=0;h<sizeof(g_FlowLine[temp_lineid].g_PointListing);h++)
+				{
+					if(g_FlowLine[temp_lineid].g_PointListing[h]==ConvertCoordinateToId(x,y,G_GameRule))
+					{
+						breakout = true;
+					}
+				}
+				if(breakout == false)
+				{
+					for(int i=0;i<SIDE_MAX_COUNT;i++)
+					{
+						if(n[i]==cell_id)
+						{
+							if(flag == FREE_BLOCK)
+							{
+								keyvalue = false;
+							}
+							if(g_GameField[y][x].walkable == false)
+							{
+								keyvalue = temp_value;
+							}
+							else
+							{
+								g_GameField[y][x].g_PosKeyValue = keyvalue;
+								temp = ConvertIdToCoordinate(cell_id,G_GameRule);
+								n = NCells(g_GameField,G_GameMatrix,G_GameRule,temp.g_Pos_x,temp.g_Pos_y);
+								for(int i=0;i<SIDE_MAX_COUNT;i++)
+								{
+									if(n[i]==g_FlowLine[temp_lineid].g_idEndPos)
+									{
+										g_FlowLine[temp_lineid].done = true;
+										g_FlowLine[temp_lineid].g_PointListing[g_FlowLine[temp_lineid].current+1] = g_FlowLine[temp_lineid].g_idEndPos;
+										g_FlowLine[temp_lineid].g_PointListing[(G_GameRule.g_Height + G_GameRule.g_Width)*2-1] = EMPTY_CELL;
+									}
+								}
+								g_FlowLine[temp_lineid].g_PointListing[g_FlowLine[temp_lineid].current] = cell_id;
+								g_FlowLine[temp_lineid].current++;
+							}
+							temp_value = keyvalue;
+							temp_id = g_GameField[y][x].g_idPos;
+						}
+					}
+				}
+			}
+			breakout = false;
+			for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+			{
+				if(g_FlowLine[i].done == true)
+				{
+					lines_done++;
+				}
+			}
+			DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,G_GameMatrix,g_FlowLine,lines_done);
+			iGlobalDone = lines_done;
+			if((lines_done == G_GameRule.g_StartPosCount) && (UsedCellsInPercentage(g_GameField,G_GameRule,G_GameMatrix) == COMPLETE))
+			{
+				system("cls");
+				DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,G_GameMatrix,g_FlowLine,lines_done);
+				EndGame();
+			}
+		}
+}
 void EndGame()
 {
 	printf("\nWinner!\n");
 	system("pause");
-	exit(1);
+	exit(0);
 }
 void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 {
@@ -326,13 +452,67 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		}
 	}
 	system("cls");
+	int lines_done = 0;
+	iGlobalDone = lines_done;
+	DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,G_GameMatrix,g_FlowLine,lines_done);
+	while(true)
+	{
+		std::string buffer;
+		std::stringstream ss;
+		int numvals[] = { 0, 0, 0 };
+		std::cin >> buffer;
+		//std::cout << "Buffer contains: \"" << buffer << '\"' << std::endl;
+		ss.clear();
+		ss.str(buffer);
+		if (!(ss >> numvals[0]))
+			throw std::runtime_error("Wrong argument");
+		std::cin >> buffer;
+		//std::cout << "Buffer contains: \"" << buffer << '\"' << std::endl;
+		ss.clear();
+		ss.str(buffer);
+		if (ss >> numvals[1]) 
+		{
+			std::cin >> buffer;
+			//std::cout << "Buffer contains: \"" << buffer << '\"' << std::endl;
+			ss.clear();
+			ss.str(buffer);
+			if (!(ss >> numvals[2]))
+			{
+				throw std::runtime_error("Wrong argument");
+			}
+			UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine,numvals[0],numvals[1],numvals[2]);
+		}
+		else
+		{
+			if (buffer != "auto")
+				throw std::runtime_error("Keyword \"" + buffer + "\" is unknown");
+			pathVariant autoSolve(G_GameRule,G_GameMatrix,numvals[0]-1);
+			for(int p = 0; p < autoSolve.m_pathLength; p++)
+			{
+				//cout<< autoSolve.path[p].g_Pos_x-1 << autoSolve.path[p].g_Pos_y-1 << "\n";
+				UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine,autoSolve.path[p].g_Pos_x-1,autoSolve.path[p].g_Pos_y-1,numvals[0]);
+			}
+		}
+		system("cls");
+		DisplayGameMatrix(G_GameRule,g_GameField,g_IdList,0,0,iGlobalDone);
+
+		
+        //doNumberAndString(numericvals[0]);
+
+        
+		//UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine,x,y,keyvalue);
+	}
+	 
+	/*
 	vector<pathVariant> variantArray;
 	//pathVariant *variantArray = (pathVariant *)malloc(sizeof(pathVariant)*G_GameRule.g_StartPosCount);
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
 		variantArray.push_back(pathVariant(G_GameRule,G_GameMatrix,i));
 		//variantArray[i].initialize(G_GameRule,G_GameMatrix,i);
+#ifdef _DEBUG
 		variantArray[i].Output();
+#endif
 	}
 	// NEW ADDED START
 	fieldComparsion **compField = (fieldComparsion**)malloc(sizeof(fieldComparsion*)*G_GameRule.g_Height);
@@ -349,8 +529,8 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 	}
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
-		//compField[G_GameMatrix[i].g_EndPos_y][G_GameMatrix[i].g_EndPos_x].m_editable = _FALSE;
-		//compField[G_GameMatrix[i].g_StartPos_y][G_GameMatrix[i].g_StartPos_x].m_editable = _FALSE;
+		//compField[G_GameMatrix[i].g_EndPos_y][G_GameMatrix[i].g_EndPos_x].m_editable = false;
+		//compField[G_GameMatrix[i].g_StartPos_y][G_GameMatrix[i].g_StartPos_x].m_editable = false;
 		int x,y;
 		for(int j=0;j<variantArray[i].m_pathLength;j++)
 		{
@@ -358,7 +538,7 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 			{
 				x = variantArray[i].path[j].g_Pos_x-1;
 				y = variantArray[i].path[j].g_Pos_y-1;
-				if(compField[y][x].m_editable == _TRUE)
+				if(compField[y][x].m_editable == true)
 				{
 					compField[y][x].m_idArray[compField[y][x].m_counter] = i;
 					compField[y][x].m_counter++;	
@@ -394,67 +574,112 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		s_overloadedCells = overloadedCoordinates.size();
 		printf("\n");
 	}
-	
-	for(int i=0;i<s_overloadedCells;i++) // все линии которые пересеклись - помечаем inCollision -> TRUE
+	if(s_overloadedCells > 0)
+	{
+		for(int i=0;i<s_overloadedCells;i++) // все линии которые пересеклись - помечаем inCollision -> TRUE
+		{
+			int x,y;
+			x = overloadedCoordinates[i].g_Pos_x;
+			y = overloadedCoordinates[i].g_Pos_y;
+			for(int j=0;j<compField[y][x].m_counter;j++)
+			{
+				if(variantArray[compField[y][x].m_idArray[j]].inCollision == false)
+				{
+				
+					variantArray[compField[y][x].m_idArray[j]].inCollision = true;
+				}
+			}
+		}
+		struct m_distID
+		{
+			int id;
+			int m_distance;
+			m_distID(int A, int B) : id(A), m_distance(B) {}
+		};
+		vector<m_distID> priorityExecution;
+		for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+		{
+			if(variantArray[i].inCollision == true)
+			{
+				priorityExecution.push_back(m_distID(i,variantArray[i].m_Distance));
+			}
+		}
+		sort(priorityExecution.begin(), priorityExecution.end(), [](const m_distID &a, const m_distID &b) { return a.m_distance < b.m_distance; });
+
+
+	#ifdef _DEBUG
+		for(int i=0;i<priorityExecution.size();i++)
+		{
+			printf("\nDISTANCE: %d  ID: %d",priorityExecution[i].m_distance,priorityExecution[i].id);
+		}
+		for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+		{
+			printf("Line : %d inCollision : %d\n",i,variantArray[i].inCollision);
+		}
+
+		printf("\noverloaded cells: %d   free cells : %d\n",s_overloadedCells,s_freeCells);
+		for(int i=0;i<s_overloadedCells;i++)
+		{
+			printf("\nx: %d y: %d\n",overloadedCoordinates[i].g_Pos_x,overloadedCoordinates[i].g_Pos_y);
+		}
+	#endif
+		int **BlockArray = (int **)malloc(sizeof(int *)*G_GameRule.g_Height);
+		for(int i=0;i<G_GameRule.g_Height;i++)
+		{
+			BlockArray[i] = (int *)malloc(sizeof(int) *G_GameRule.g_Width);
+		}
+		nullArray(G_GameRule.g_Width,G_GameRule.g_Height,BlockArray);
+		for(int i=0;i<G_GameRule.g_StartPosCount;i++)
+		{
+			if(variantArray[i].inCollision != true)
+			{
+				for(int h=0;h<variantArray[i].m_pathLength;h++)
+				{
+					int x,y;
+					x = variantArray[i].path[h].g_Pos_x-1;
+					y = variantArray[i].path[h].g_Pos_y-1;
+					BlockArray[y][x] = WALL;
+				}
+			}
+		}
+		vector<pathVariant> varArray;
+		for(int i=0;i<priorityExecution.size();i++)
+		{
+			varArray.push_back(pathVariant(G_GameRule,G_GameMatrix,priorityExecution[i].id,BlockArray));
+			UpdateBlockArray(varArray[i].path,BlockArray,varArray[i].m_pathLength);
+			varArray[i].Output();
+		}
+	#ifdef _DEBUG
+		for(int i=0;i<G_GameRule.g_Height;i++)
+		{
+			for(int j=0;j<G_GameRule.g_Width;j++)
+			{
+				printf("%d\t",BlockArray[i][j]);
+			}
+			printf("\n");
+		}
+	#endif
+		//pathVariant check(G_GameRule,G_GameMatrix,0,BlockArray);
+		//check.Output();
+		// END
+		//AutoSolve(G_GameRule,G_GameMatrix);
+	}
+	//UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine);
+*/
+}
+void UpdateBlockArray(coordinate *input, int **output, int i_size)
+{
+	for(int i=0;i<i_size;i++)
 	{
 		int x,y;
-		x = overloadedCoordinates[i].g_Pos_x;
-		y = overloadedCoordinates[i].g_Pos_y;
-		for(int j=0;j<compField[y][x].m_counter;j++)
-		{
-			if(variantArray[compField[y][x].m_idArray[j]].inCollision == _FALSE)
-			{
-				variantArray[compField[y][x].m_idArray[j]].inCollision = _TRUE;
-			}
-		}
+		x = input[i].g_Pos_x-1;
+		y = input[i].g_Pos_y-1;
+		output[y][x] = WALL;
 	}
-#ifdef _DEBUG
-	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
-	{
-		printf("Line : %d inCollision : %d\n",i,variantArray[i].inCollision);
-	}
-
-	printf("\noverloaded cells: %d   free cells : %d\n",s_overloadedCells,s_freeCells);
-	for(int i=0;i<s_overloadedCells;i++)
-	{
-		printf("\nx: %d y: %d\n",overloadedCoordinates[i].g_Pos_x,overloadedCoordinates[i].g_Pos_y);
-	}
-#endif
-	int **BlockArray = (int **)malloc(sizeof(int *)*G_GameRule.g_Height);
-	for(int i=0;i<G_GameRule.g_Height;i++)
-	{
-		BlockArray[i] = (int *)malloc(sizeof(int) *G_GameRule.g_Width);
-	}
-	nullArray(G_GameRule.g_Width,G_GameRule.g_Height,BlockArray);
-	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
-	{
-		if(variantArray[i].inCollision != _TRUE)
-		{
-			for(int h=0;h<variantArray[i].m_pathLength;h++)
-			{
-				int x,y;
-				x = variantArray[i].path[h].g_Pos_x-1;
-				y = variantArray[i].path[h].g_Pos_y-1;
-				BlockArray[y][x] = WALL;
-			}
-		}
-	}
-#ifdef _DEBUG
-	for(int i=0;i<G_GameRule.g_Height;i++)
-	{
-		for(int j=0;j<G_GameRule.g_Width;j++)
-		{
-			printf("%d\t",BlockArray[i][j]);
-		}
-		printf("\n");
-	}
-#endif
-	pathVariant check(G_GameRule,G_GameMatrix,0,BlockArray);
-	check.Output();
-	// END
-	//AutoSolve(G_GameRule,G_GameMatrix);
-	UpdateGameField(G_GameMatrix,G_GameRule,g_GameField,g_IdList,g_FlowLine);
 }
+
+
+
 short *NCells(cell **g_GameField,FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule,short x, short y) // (¬ычисл€ет окрестность фон неймана вокруг заданной точки с размерностью 1 )возвращает массив с id_pos соседей указанной точки (short) by default 
 {
 	short *g_NCellsArray;
@@ -462,7 +687,7 @@ short *NCells(cell **g_GameField,FlowFileArray *G_GameMatrix,MapFileHeader G_Gam
 	g_NCellsArray = (short *)malloc(sizeof(short)*SIDE_MAX_COUNT);
 	for(int j=0;j<SIDE_MAX_COUNT;j++)
 	{
-		g_NCellsArray[j] = -1;
+		g_NCellsArray[j] = WALL;
 	}
 	if ((y+1)<G_GameRule.g_Height)
 	{
@@ -611,174 +836,30 @@ int main()
 	if (!(ss >> a[1])) { printf("1\n"); system("pause"); }
 	if (!(ss >> a[2])) { printf("3\n"); system("pause"); }
 	*/
-	ReadFileHeader();
+	//WriteFileHeader();
+	//ReadFileHeader();
 	//GameMenu();
-	system("pause");
+	GameMenu();
+	//system("pause");
 }
 void GameMenu()
 {
-	int entry;
+	char entry;
 	printf("1. Create game level.\n");
 	printf("2. Start the game.\n");
 	printf("3. Exit.\n");
-	scanf("%d",&entry);
+	entry = _getch();
 	switch(entry)
 	{
-	case 1:
+	case '1':
 		WriteFileHeader();
-	case 2:
+	case '2':
 		ReadFileHeader();
-	case 3:
-		exit(1);
+	case '3':
+		exit(0);
 	}
-	system("pause");
 }
-
-/*
-void AutoSolve(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int x1, int y1, int x2, int y2)
-{
-	system("cls");
-	H = G_GameRule.g_Height+2;
-	W = G_GameRule.g_Width+2;
-	px = (int *)malloc(sizeof(int)*H*W);
-	py = (int *)malloc(sizeof(int)*H*W);
-	grid = (int **)malloc(sizeof(int *)*H);
-	for(int i=0;i<H;i++)
-	{
-		grid[i]=(int *)malloc(sizeof(int)*W);
-	}
-	//int x1,y1,x2,y2;
-	scanf("%d%d%d%d", &x1,&y1,&x2,&y2);
-	x1=x1+1;
-	x2=x2+1;
-	y1=y1+1;
-	y2=y2+1;
-	for(int i=0;i<H*W;i++)
-	{
-		px[i]=-1;
-		py[i]=-1;
-	}
-	for(int g = 0; g<H;g++)
-	{
-		for(int h = 0; h<W;h++)
-		{
-			if((g == 0 || h == 0) || (g == H-1 || h == W-1))
-			{
-				grid[g][h] = WALL;
-			}
-			else
-			{
-				grid[g][h] = BLANK;
-			}
-		}
-	}
-	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
-	{
-		short g_TempStart_x,g_TempStart_y,g_TempEnd_x,g_TempEnd_y;
-		g_TempStart_x = G_GameMatrix[i].g_StartPos_x+1;
-		g_TempStart_y = G_GameMatrix[i].g_StartPos_y+1;
-		g_TempEnd_x = G_GameMatrix[i].g_EndPos_x+1;
-		g_TempEnd_y = G_GameMatrix[i].g_EndPos_y+1;
-		grid[g_TempStart_y][g_TempStart_x] = WALL;
-		grid[g_TempEnd_y][g_TempEnd_x] = WALL;
-	}
-	for(int i=0;i<H;i++)
-	{
-		printf("\n");
-		for(int j=0;j<W;j++)
-		{
-				printf("%d\t",grid[i][j]);
-		}
-	}
-	printf("\n");
-	grid[y1][x1] = BLANK;
-	grid[y2][x2] = BLANK;
-	for(int i=0;i<H;i++)
-	{
-		printf("\n");
-		for(int j=0;j<W;j++)
-		{
-				printf("%d\t",grid[i][j]);
-		}
-	}
-	printf("\n");
-	//grid[w][q] = BLANK;
-	//grid[r][e] = BLANK;
-	AlgorithmLee(x1,y1,x2,y2);
-	for(int i=0;i<H;i++)
-	{
-		printf("\n");
-		for(int j=0;j<W;j++)
-		{
-				printf("%d\t",grid[i][j]);
-		}
-	}
-	for(int T=0;T<W*H;T++)
-	{
-		printf("x:%d  y:%d\n",px[T],py[T]);
-	}
-	system("pause");
-}*/
 int ManhattanDistance(int x1, int x2, int y1, int y2)
 {
 	return abs(x1-x2)+abs(y1-y2);
 }
-/*
-bool AlgorithmLee(int ax, int ay, int bx, int by)   // поиск пути из €чейки (ax, ay) в €чейку (bx, by)
-{
-	int dx[4] = {1, 0, -1, 0};   // смещени€, соответствующие сосед€м €чейки
-	int dy[4] = {0, 1, 0, -1};   // справа, снизу, слева и сверху
-	int d, x, y, k;
-	bool stop;
-	// распространение волны
-	d = 0;
-	grid[ay][ax] = 0;            // стартова€ €чейка помечена 0
-	do 
-	{
-		stop = true;               // предполагаем, что все свободные клетки уже помечены
-		for( y = 0; y < H; ++y )
-		{
-			for( x = 0; x < W; ++x )
-			{
-				if ( grid[y][x] == d )                         // €чейка (x, y) помечена числом d
-				{
-					for ( k = 0; k < 4; ++k )                    // проходим по всем непомеченным сосед€м
-					{
-						if ( grid[y + dy[k]][x + dx[k]] == BLANK )
-						{
-							stop = false;                            // найдены непомеченные клетки
-							grid[y + dy[k]][x + dx[k]] = d + 1;      // распростран€ем волну
-						}
-					}
-				}
-			}
-		}
-		d++;
-	} 
-	while ( !stop && grid[by][bx] == BLANK );
-	if (grid[by][bx] == BLANK) return false;  // путь не найден
-	// восстановление пути
-	len = grid[by][bx];            // длина кратчайшего пути из (ax, ay) в (bx, by)
-	x = bx;
-	y = by;
-	d = len;
-	while ( d > 0 )
-	{
-		px[d] = x;
-		py[d] = y;                   // записываем €чейку (x, y) в путь
-		d--;
-		for (k = 0; k < 4; ++k)
-		{
-			if (grid[y + dy[k]][x + dx[k]] == d)
-			{
-				x = x + dx[k];
-				y = y + dy[k];           // переходим в €чейку, котора€ на 1 ближе к старту
-				break;
-			}
-		}
-	}
-	px[0] = ax;
-	py[0] = ay;                    // теперь px[0..len] и py[0..len] - координаты €чеек пути
-	return true;
-}
-*/

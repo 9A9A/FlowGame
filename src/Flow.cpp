@@ -11,9 +11,10 @@ void pathVariant::reinitialize()
 }
 void pathVariant::Output()
 {
-	printf("\n=======================================\n");
+	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+	printf("\n==============================================================================\n");
 	printf("Line id : %d  Manhattan Distance: %d     Path distance: %d\n",globalId,m_Distance,m_pathLength);
-	printf("\n=======================================\n");
+	printf("\n==============================================================================\n");
 	for(int i=0;i<H*W;i++)
 	{
 		if(path[i].g_Pos_x!= EMPTY_CELL )
@@ -21,13 +22,35 @@ void pathVariant::Output()
 			printf("\nx:%d || y:%d",path[i].g_Pos_x,path[i].g_Pos_y);
 		}
 	}
-	printf("\n=======================================\n");
+	printf("\n==============================================================================\n");
+	SetConsoleTextAttribute(output, 15);
+	bool mark;
+	int fakeGlobalId = ++globalId;
 	for(int g = 0; g<H;g++)
 	{
 		printf("\n");
 		for(int h = 0; h<W;h++)
 		{
-			printf("%d\t",gridArray[g][h]);
+			mark = true;
+			for(int l = 0; l < H*W ; l++)
+			{
+				if((path[l].g_Pos_x == h) && (path[l].g_Pos_y == g))
+				{
+					SetConsoleTextAttribute(output,fakeGlobalId*20);
+					printf("%d\t",gridArray[g][h]);
+					mark = FALSE;
+				}
+				else
+				{
+					SetConsoleTextAttribute(output,15);
+				}
+			}
+			if(mark == true)
+			{
+				SetConsoleTextAttribute(output,15);
+				printf("%d\t",gridArray[g][h]);
+			}
+			
 		}
 	}
 }
@@ -41,7 +64,7 @@ void pathVariant::clearPath()
 }
 pathVariant::pathVariant(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,int FlowId)
 {
-	inCollision = _FALSE;
+	inCollision = false;
 	pathRecognize(G_GameRule,G_GameMatrix,FlowId);
 	m_offset = M_OFFSET;
 	globalId = FlowId;
@@ -52,7 +75,7 @@ pathVariant::pathVariant(MapFileHeader G_GameRule, FlowFileArray *G_GameMatrix,i
 }
 pathVariant::pathVariant(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,int FlowId,int **m_BlockArray)// TO DO : допилить с входным блокирующим массивом
 {
-	inCollision = _FALSE;
+	inCollision = false;
 	pathRecognize(G_GameRule,G_GameMatrix,FlowId);
 	m_offset = M_OFFSET;
 	globalId = FlowId;
@@ -137,7 +160,7 @@ void pathVariant::loadGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix,
 		{
 			if(m_BlockArray[g][l] == WALL)
 			{
-				gridArray[g+1][l+1] == m_BlockArray[g][l];
+				gridArray[g+1][l+1] = m_BlockArray[g][l];
 			}
 		}
 	}
@@ -220,7 +243,7 @@ void pathVariant::traceGrid(MapFileHeader G_GameRule,FlowFileArray *G_GameMatrix
 //////////////////////////////////////////////////////////////////////////////
 void fieldComparsion::initialize(MapFileHeader G_GameRule)
 {
-	m_editable = _TRUE;
+	m_editable = true;
 	m_counter = FREE_BLOCK;
 	m_idArray = (int *)malloc(sizeof(m_idArray)*G_GameRule.g_StartPosCount);
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
