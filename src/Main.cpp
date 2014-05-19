@@ -32,8 +32,6 @@ void WriteFileHeader() // Генерация игрового поля (запись в файл)
 		cin >> mpfArray[i].g_EndPos_x;
 		cout << "\nEnter y coord of endpos: ";
 		cin >> mpfArray[i].g_EndPos_y;
-		//cout << "\nEnter Keyvalue for this line:";
-		//cin >> mpfArray[i].g_idPos;
 		mpfArray[i].g_PosKeyValue = i+1;
 	}
 	hFile = CreateFile(stdPath,GENERIC_WRITE, 0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
@@ -409,25 +407,6 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 	cell **g_GameField = AllocateMemory(G_GameRule);
 	DWORD *g_IdList = BuildListId(G_GameRule,g_GameField);
 	FlowLine *g_FlowLine = FlowLinesArrays(G_GameRule,g_GameField,G_GameMatrix);
-	//======================================================
-	/*
-	H = G_GameRule.g_Height;
-	W = G_GameRule.g_Width;
-	px = (int *)malloc(sizeof(int)*H*W);
-	py = (int *)malloc(sizeof(int)*H*W);
-	grid = (int **)malloc(sizeof(int *)*G_GameRule.g_Height);
-	for(int i=0;i<G_GameRule.g_Height;i++)
-	{
-		grid[i]=(int *)malloc(sizeof(int)*G_GameRule.g_Width);
-	}
-	for(int g = 0; g<G_GameRule.g_Height;g++)
-	{
-		for(int h = 0; h<G_GameRule.g_Width;h++)
-		{
-			grid[g][h] = BLANK;
-		}
-	}*/
-	//======================================================
 	for(int i=0;i<G_GameRule.g_StartPosCount;i++)
 	{
 		short g_TempStart_x,g_TempStart_y,g_TempEnd_x,g_TempEnd_y;
@@ -439,10 +418,6 @@ void BuildGameMatrix(FlowFileArray *G_GameMatrix,MapFileHeader G_GameRule)
 		g_GameField[g_TempEnd_y][g_TempEnd_x].g_PosKeyValue = G_GameMatrix[i].g_PosKeyValue;
 		g_GameField[g_TempStart_y][g_TempStart_x].walkable = 0;
 		g_GameField[g_TempEnd_y][g_TempEnd_x].walkable = 0;
-		//=========================================
-		//grid[g_TempStart_y][g_TempStart_x] = WALL;
-		//grid[g_TempEnd_y][g_TempEnd_x] = WALL;
-		//=========================================
 	}
 	for(int i=0;i<G_GameRule.g_Height;i++)
 	{
@@ -818,29 +793,7 @@ FlowLine *FlowLinesArrays(MapFileHeader G_GameRule,cell **g_GameField,FlowFileAr
 }
 int main()
 {
-	/*
-	int e[10][10];
-	coordinate *fuck = VonNeumannNeighborhood(*e,10,10,5,5);
-	for(int i=0;i<SIDE_MAX_COUNT;i++)
-	{
-		printf("x:%d  y:%d\n",fuck[i].g_Pos_x,fuck[i].g_Pos_y);
-	}
-	/*
-	string str;
-	getline(cin, str);
-	int a[3];
-	int quantity = 0;
-	stringstream ss(str);
-	if (!(ss >> a[0])) { printf("0\n"); system("pause"); }
-	++quantity;
-	if (!(ss >> a[1])) { printf("1\n"); system("pause"); }
-	if (!(ss >> a[2])) { printf("3\n"); system("pause"); }
-	*/
-	//WriteFileHeader();
-	//ReadFileHeader();
-	//GameMenu();
 	GameMenu();
-	//system("pause");
 }
 void GameMenu()
 {
